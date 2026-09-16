@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Recorded real gateway inference with OTEL, Collector/Tempo export and ledger replay. Added actual
+  Grafana/response screenshots to both READMEs, archived evidence and reproducible tracing commands.
 - Added explicit `LLM_BACKEND=openai` with `OPENAI_API_KEY` for Agno and CrewAI, shared text bridges,
   credential-free Responses API contracts and ADR 0007. Gateway remains the default, without
   automatic backend fallback. Added direct-mode configuration and real-inference commands.

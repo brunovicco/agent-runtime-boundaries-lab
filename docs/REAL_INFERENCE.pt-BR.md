@@ -244,6 +244,82 @@ O `/health` também informa `llm_backend=openai`; o CrewAI faz duas chamadas seq
 Para voltar ao gateway, defina `LLM_BACKEND=gateway`, confira suas variáveis governadas e reinicie
 o especialista. Retome os serviços Gateway/PDP necessários ao modo governado.
 
+## Execução real com OTEL e capturas
+
+A execução registrada em **16/09/2026** usou `OTEL_ENABLED=true` nos dois processos do lab,
+o backend `gateway` e evidências sintéticas. A inferência concluiu em **6,544756 s**; a repetição
+dos mesmos IDs concluiu em **0,084811 s**, com reuso e resumo idêntico. O Tempo recebeu dois spans
+com o mesmo trace ID e relação pai/filho confirmada.
+
+As respostas, os tempos e os spans normalizados estão em
+[`evidence/otel-live-run.json`](evidence/otel-live-run.json). As capturas dos READMEs apresentam o
+relatório das respostas reais e o trace consultado no Grafana. O relatório pode ser aberto seguindo
+[`evidence/README.md`](evidence/README.md).
+
+Para reproduzir, mantenha Gateway/PDP disponíveis e inicie a stack de observabilidade:
+
+```bash
+cd /Users/brunovicco/Projects/agent-runtime-boundaries-lab
+docker compose up -d postgres tempo otel-collector grafana
+curl --fail-with-body -sS http://127.0.0.1:3200/ready
+```
+
+O Tempo pode levar alguns segundos para ficar pronto. O Collector recebe OTLP/HTTP em 4318,
+encaminha os spans ao Tempo, e a fonte Tempo já está provisionada no Grafana em 3000.
+
+No terminal do Agno, carregue `.env` e habilite OTEL depois de carregá-lo. As portas temporárias
+8201/8203 permitem preservar os serviços existentes em 8101/8003:
+
+```bash
+cd /Users/brunovicco/Projects/agent-runtime-boundaries-lab
+set -a
+source .env
+set +a
+export OTEL_ENABLED=true
+export LLM_BACKEND=gateway
+uv run --frozen uvicorn agent_runtime_boundaries.entrypoints.specialist:app \
+  --host 127.0.0.1 --port 8201
+```
+
+No terminal da API:
+
+```bash
+cd /Users/brunovicco/Projects/agent-runtime-boundaries-lab
+set -a
+source .env
+set +a
+unset OPENAI_API_KEY GOVERNED_LLM_GATEWAY_API_KEY
+export OTEL_ENABLED=true
+export SPECIALIST_A2A_URL=http://127.0.0.1:8201/a2a
+uv run --frozen uvicorn agent_runtime_boundaries.entrypoints.api:app \
+  --host 127.0.0.1 --port 8203
+```
+
+Use o curl sintético da seção de teste com a URL `http://127.0.0.1:8203/v1/reviews` e novos IDs.
+Repita apenas o curl, com os mesmos IDs, para comprovar reuso. Aguarde alguns segundos para o
+exportador em lote enviar os spans e consulte o Tempo:
+
+```bash
+curl --fail-with-body -sS \
+  'http://127.0.0.1:3200/api/search?tags=service.name%3Dlanggraph-orchestrator&limit=20'
+```
+
+No Grafana, conclua a configuração inicial de autenticação, abra **Explore**, selecione **Tempo**,
+cole o `traceID` retornado no editor e clique **Run query**. O trace arquivado desta execução é
+`553921e6193daaaa264e37d077dba594`. Enquanto ele estiver no Tempo local, também pode ser consultado
+diretamente:
+
+```bash
+curl --fail-with-body -sS \
+  http://127.0.0.1:3200/api/traces/553921e6193daaaa264e37d077dba594
+```
+
+Verifique `specialist.delegate` no processo `langgraph-orchestrator` e `specialist.handle` no
+`agno-risk-specialist`, compartilhando o trace ID e com o segundo span filho do primeiro.
+Os atributos registram apenas `operation`. A instrumentação cobre a delegação A2A; spans próprios
+do gateway/provedor e de todo o workflow não fazem parte deste trace. A repetição concluída evita
+uma nova delegação ao especialista.
+
 ## Encerrar
 
 Pare os serviços Python com Ctrl+C nos respectivos terminais. Para parar o PostgreSQL preservando
@@ -254,5 +330,5 @@ cd /Users/brunovicco/Projects/agent-runtime-boundaries-lab
 docker compose stop postgres
 ```
 
-O `.env`, os checkouts/configurações e a sintaxe dos helpers foram conferidos. Os serviços e a
-inferência real não foram iniciados durante a preparação deste roteiro.
+O `.env`, os checkouts/configurações e a sintaxe dos helpers foram conferidos. A execução real
+com OTEL, a exportação ao Tempo e o reuso do ledger foram verificados no registro arquivado acima.

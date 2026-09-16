@@ -77,6 +77,31 @@ As invariantes importantes estão explícitas no código:
 10. O contexto de rastreamento W3C cruza o limite HTTP A2A sem transformar o `trace_id` em um ID de negócio.
 11. A seleção do backend é explícita. No modo gateway, o especialista recebe a credencial de consumidor; no modo OpenAI direto, a chave do provedor fica na configuração secreta do especialista, fora da serialização e telemetria.
 
+## Evidências de inferência real e traces
+
+Uma execução local real em **16/09/2026** percorreu LangGraph → A2A → Agno → Governed LLM Gateway
+com evidências sintéticas de comerciante e `OTEL_ENABLED=true`. A primeira chamada concluiu em
+**6,54 s**, com `specialist_reused=false`. A repetição dos mesmos IDs concluiu em **0,085 s**,
+com `specialist_reused=true` e resumo idêntico. Os tempos descrevem uma única execução local.
+
+![Inferência real e reuso do ledger com IDs estáveis](docs/images/live-inference-otel.png)
+
+*Captura do relatório de evidência somente para leitura, construído com as respostas HTTP reais.
+As respostas completas e os tempos medidos estão no [registro da execução](docs/evidence/otel-live-run.json).*
+
+O Collector exportou a delegação A2A para o Tempo. O Grafana mostra **dois spans ligados no mesmo
+trace**: `langgraph-orchestrator / specialist.delegate` e `agno-risk-specialist / specialist.handle`.
+O filho referencia o ID do span pai; os atributos contêm apenas metadados da operação.
+Essa instrumentação cobre a fronteira A2A entre orquestrador e especialista.
+
+![Grafana Explore com o trace real de LangGraph e Agno](docs/images/live-trace-grafana.png)
+
+*Trace `553921e6193daaaa264e37d077dba594`, recuperado do Tempo e visualizado no Grafana Explore.
+Uma [captura do relatório de evidência](docs/images/live-trace-tempo.png) também mostra a relação pai/filho verificada.*
+
+Veja os [comandos para executar com OTEL](docs/REAL_INFERENCE.pt-BR.md#execução-real-com-otel-e-capturas)
+e [como abrir o relatório arquivado](docs/evidence/README.md).
+
 ---
 
 ## Três experimentos comparativos, mais demonstrações de falha

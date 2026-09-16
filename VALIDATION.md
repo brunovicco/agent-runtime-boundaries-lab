@@ -1,5 +1,24 @@
 # Validation
 
+## Real gateway inference with OTEL — 2026-09-16
+
+- Real LangGraph → A2A → Agno → Governed LLM Gateway inference: **passed**, using synthetic
+  merchant evidence, risk `high`, classification `public` and `OTEL_ENABLED=true` in both lab processes.
+- First execution: HTTP **200**, phase **completed**, `specialist_reused=false`, **6.544756 s**.
+- Repetition with identical IDs: HTTP **200**, phase **completed**, `specialist_reused=true`,
+  **0.084811 s**, summary identical to the first result.
+- Collector → Tempo export: **passed**. Grafana Explore displayed the same trace successfully.
+- Trace `553921e6193daaaa264e37d077dba594`: **2 services, 2 spans** with matching trace IDs;
+  `specialist.handle` references `specialist.delegate` as its parent.
+- Span attributes: **metadata only** (`operation`), without prompts, A2A bodies, credentials or payloads.
+- Screenshots captured from the real-response evidence report and Grafana and included in both READMEs.
+- Normalized trace/request/results archived in [`docs/evidence/otel-live-run.json`](docs/evidence/otel-live-run.json).
+
+This run used temporary lab ports 8201/8203, preserving existing services on 8101/8003. The trace
+covers the A2A delegation boundary; it contains no gateway/provider or whole-workflow spans.
+These timings describe one local run and do not establish a performance benchmark or exactly-once
+provider inference before the effect ledger records the completed result.
+
 ## Optional direct OpenAI — 2026-09-16
 
 - Complete `uv run python scripts/quality_gate.py`: **passed** (offline cached dependencies).

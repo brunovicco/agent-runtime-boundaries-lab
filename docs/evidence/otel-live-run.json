@@ -1,0 +1,82 @@
+{
+  "captured_at": "2026-09-16T13:14:52.770336+00:00",
+  "backend": "gateway",
+  "otel_enabled": true,
+  "endpoints": {
+    "orchestrator": "http://127.0.0.1:8203",
+    "specialist": "http://127.0.0.1:8201",
+    "tempo": "http://127.0.0.1:3200"
+  },
+  "request": {
+    "conversation_id": "merchant-synthetic-otel-20260916T131256Z",
+    "execution_id": "exec:real-otel-20260916T131256Z",
+    "delegation_id": "deleg:real-otel-20260916T131256Z",
+    "prompt": "Analise o risco deste comerciante ficticio em portugues em ate 8 linhas. Separe fatos, inferencias e incertezas. Nao invente benchmarks. Nao aprove nem execute transacoes.",
+    "payload": {
+      "synthetic": true,
+      "merchant_tier": "growth",
+      "chargeback_ratio": 0.012
+    }
+  },
+  "first_execution": {
+    "http_status": 200,
+    "elapsed_seconds": 6.544756,
+    "response": {
+      "conversation_id": "merchant-synthetic-otel-20260916T131256Z",
+      "execution_id": "exec:real-otel-20260916T131256Z",
+      "delegation_id": "deleg:real-otel-20260916T131256Z",
+      "phase": "completed",
+      "summary": "**Análise de Risco – Comerciante Fictício (dados sintéticos)**\n\n**Fatos:**\n- Payload marcado como `synthetic: True` (dado fictício/teste).\n- `merchant_tier`: \"growth\".\n- `chargeback_ratio`: 0,012 (1,2%).\n\n**Inferências:**\n- Um índice de chargeback de 1,2% sugere volume moderado de contestações, mas sem contexto de setor/benchmark não é possível classificar como alto ou baixo.\n- O tier \"growth\" pode indicar comerciante em expansão, possivelmente com histórico limitado de dados.\n\n**Incertezas:**\n- Não há informações sobre volume de transações, tempo de operação, setor de atuação ou histórico de fraude.\n- Nenhum benchmark real foi fornecido ou deve ser inventado para comparação.\n- Dados sintéticos não representam comportamento real de mercado.\n\n**Conclusão:** Não é possível emitir parecer de aprovação/reprovação. Recomenda-se coleta de dados adicionais antes de qualquer decisão operacional. Nenhuma ação ou transação foi executada nesta análise.",
+      "specialist_reused": false
+    }
+  },
+  "replay": {
+    "http_status": 200,
+    "elapsed_seconds": 0.084811,
+    "response": {
+      "conversation_id": "merchant-synthetic-otel-20260916T131256Z",
+      "execution_id": "exec:real-otel-20260916T131256Z",
+      "delegation_id": "deleg:real-otel-20260916T131256Z",
+      "phase": "completed",
+      "summary": "**Análise de Risco – Comerciante Fictício (dados sintéticos)**\n\n**Fatos:**\n- Payload marcado como `synthetic: True` (dado fictício/teste).\n- `merchant_tier`: \"growth\".\n- `chargeback_ratio`: 0,012 (1,2%).\n\n**Inferências:**\n- Um índice de chargeback de 1,2% sugere volume moderado de contestações, mas sem contexto de setor/benchmark não é possível classificar como alto ou baixo.\n- O tier \"growth\" pode indicar comerciante em expansão, possivelmente com histórico limitado de dados.\n\n**Incertezas:**\n- Não há informações sobre volume de transações, tempo de operação, setor de atuação ou histórico de fraude.\n- Nenhum benchmark real foi fornecido ou deve ser inventado para comparação.\n- Dados sintéticos não representam comportamento real de mercado.\n\n**Conclusão:** Não é possível emitir parecer de aprovação/reprovação. Recomenda-se coleta de dados adicionais antes de qualquer decisão operacional. Nenhuma ação ou transação foi executada nesta análise.",
+      "specialist_reused": true
+    }
+  },
+  "trace": {
+    "trace_id": "553921e6193daaaa264e37d077dba594",
+    "root_service": "langgraph-orchestrator",
+    "root_span": "specialist.delegate",
+    "duration_ms": 6402,
+    "spans": [
+      {
+        "service": "langgraph-orchestrator",
+        "name": "specialist.delegate",
+        "span_id": "517c078821c9aac4",
+        "parent_span_id": null,
+        "start_time_unix_nano": "1789564377172012000",
+        "end_time_unix_nano": "1789564383574636000",
+        "duration_ms": 6402.624,
+        "attributes": {
+          "operation": "specialist_delegate"
+        }
+      },
+      {
+        "service": "agno-risk-specialist",
+        "name": "specialist.handle",
+        "span_id": "f8fceb4ffd41b94c",
+        "parent_span_id": "517c078821c9aac4",
+        "start_time_unix_nano": "1789564377287575000",
+        "end_time_unix_nano": "1789564383561506000",
+        "duration_ms": 6273.931,
+        "attributes": {
+          "operation": "specialist_handle"
+        }
+      }
+    ]
+  },
+  "checks": {
+    "summary_identical": true,
+    "parent_child_link_valid": true,
+    "span_attributes_metadata_only": true
+  }
+}

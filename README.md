@@ -79,6 +79,31 @@ The important invariants are explicit in code:
 11. Backend selection is explicit. Gateway mode uses a consumer credential; direct OpenAI keeps
     the provider key in specialist secret configuration, outside framework serialization/telemetry.
 
+## Live inference and trace evidence
+
+A real local run on **2026-09-16** used LangGraph → A2A → Agno → Governed LLM Gateway with
+synthetic merchant evidence and `OTEL_ENABLED=true`. The first request completed in **6.54 s**
+with `specialist_reused=false`; repeating the same IDs completed in **0.085 s** with
+`specialist_reused=true` and an identical summary. These timings describe one local run.
+
+![Real inference and ledger replay with stable IDs](docs/images/live-inference-otel.png)
+
+*Screenshot of the read-only evidence report built from the actual HTTP responses. The complete
+responses and measured timings are preserved in [the execution record](docs/evidence/otel-live-run.json).*
+
+The Collector exported the A2A delegation to Tempo. Grafana shows **two linked spans in one trace**:
+`langgraph-orchestrator / specialist.delegate` and `agno-risk-specialist / specialist.handle`.
+The child references the parent's span ID; span attributes contain only operation metadata.
+This instrumentation covers the A2A boundary between the orchestrator and specialist.
+
+![Grafana Explore showing the real LangGraph and Agno trace](docs/images/live-trace-grafana.png)
+
+*Trace `553921e6193daaaa264e37d077dba594`, retrieved from Tempo and viewed in Grafana Explore.
+An [evidence-report capture](docs/images/live-trace-tempo.png) also presents the verified parent/child relationship.*
+
+See the [OTEL execution commands](docs/REAL_INFERENCE.pt-BR.md#execução-real-com-otel-e-capturas)
+and [how to open the archived evidence report](docs/evidence/README.md).
+
 ## Three comparative experiments, plus failure demonstrations
 
 ### Failure demonstration: show the dual-ownership anti-pattern

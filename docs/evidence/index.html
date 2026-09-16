@@ -1,0 +1,149 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Execução real com OTEL — Agent Runtime Boundaries Lab</title>
+  <style>
+    :root { color-scheme: light; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; color: #19283d; background: #f3f6fa; }
+    * { box-sizing: border-box; }
+    body { margin: 0; }
+    main { max-width: 1320px; margin: 0 auto; padding: 34px 38px; }
+    .eyebrow { font-size: 12px; letter-spacing: 2px; color: #526780; font-weight: 700; }
+    h1 { font-size: 32px; margin: 10px 0 8px; letter-spacing: -.7px; }
+    h2 { font-size: 18px; margin: 0 0 14px; }
+    p { margin: 0; line-height: 1.5; }
+    .subtitle, .muted { color: #526780; }
+    header { display: flex; justify-content: space-between; gap: 20px; align-items: center; }
+    .badge { padding: 9px 13px; border-radius: 24px; background: #e2f2e9; color: #176a42; font-weight: 650; font-size: 13px; white-space: nowrap; }
+    nav { display: flex; align-items: center; gap: 6px; border-bottom: 1px solid #d9e1ec; margin: 25px 0 22px; padding-bottom: 12px; }
+    button { font: inherit; font-size: 14px; border: 0; padding: 10px 16px; border-radius: 8px; background: transparent; color: #526780; cursor: pointer; }
+    button[aria-selected="true"] { background: #1e3d64; color: white; font-weight: 650; }
+    a { color: #315f9d; }
+    nav a { margin-left: auto; font-size: 13px; }
+    .cards { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin-bottom: 18px; }
+    .panel { padding: 22px 24px; border: 1px solid #dce3ed; border-radius: 12px; background: white; margin-bottom: 18px; }
+    .cards .panel { margin: 0; }
+    .panel-head { display: flex; align-items: center; justify-content: space-between; }
+    .panel-head h2 { margin-bottom: 6px; }
+    .duration { font-size: 28px; font-weight: 700; font-variant-numeric: tabular-nums; }
+    .fields { display: flex; gap: 22px; margin-top: 14px; font-size: 14px; }
+    code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 13px; }
+    .fields code { display: block; font-size: 16px; color: #19283d; margin-top: 6px; }
+    .green { color: #176a42; }
+    .ids { display: grid; grid-template-columns: 120px 1fr; gap: 9px 16px; font-size: 13px; }
+    .summary { white-space: pre-wrap; font-size: 14px; line-height: 1.47; margin: 0; font-family: inherit; }
+    .trace-top { display: flex; justify-content: space-between; gap: 25px; align-items: center; }
+    .trace-id { font-size: 16px; }
+    .trace-meta { display: flex; gap: 30px; margin-top: 18px; font-size: 14px; }
+    .trace-meta b { display: block; margin-top: 5px; font-size: 17px; }
+    .timeline { display: grid; grid-template-columns: 360px 1fr; margin-top: 18px; }
+    .ticks { display: flex; justify-content: space-between; font-size: 12px; color: #526780; border-bottom: 1px solid #dce3ed; padding: 0 0 12px; }
+    .span-label { padding: 20px 14px 20px 0; border-bottom: 1px solid #e8edf4; }
+    .span-label code { display: block; margin-top: 6px; color: #526780; }
+    .span-label.child { padding-left: 22px; }
+    .span-track { position: relative; display: flex; align-items: center; border-bottom: 1px solid #e8edf4; }
+    .bar { height: 30px; border-radius: 5px; background: #3f6dba; color: white; font-size: 12px; display: flex; align-items: center; padding-left: 12px; min-width: 80px; }
+    .bar.child { background: #268267; }
+    .relation { padding: 15px 18px; border-radius: 8px; background: #edf5f2; color: #176a42; margin-top: 20px; font-size: 14px; }
+    table { width: 100%; border-collapse: collapse; font-size: 14px; }
+    th, td { text-align: left; padding: 12px 10px; border-bottom: 1px solid #e8edf4; vertical-align: top; }
+    th { color: #526780; font-weight: 550; font-size: 12px; }
+    .note { font-size: 13px; color: #526780; line-height: 1.5; }
+    footer { font-size: 12px; color: #526780; padding: 0 2px; }
+    [hidden] { display: none !important; }
+    @media (max-width: 800px) { main { padding: 22px; } header { display: block; } header .badge { display: inline-block; margin-top: 14px; } .cards { grid-template-columns: 1fr; } .timeline { grid-template-columns: 230px 1fr; } .fields { gap: 12px; } .ids { grid-template-columns: 1fr; } .ids code, .trace-id { overflow-wrap: anywhere; } }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <div>
+        <div class="eyebrow">AGENT RUNTIME BOUNDARIES LAB</div>
+        <h1>Inferência real com OpenTelemetry</h1>
+        <p class="subtitle">Relatório de evidência: respostas HTTP reais e spans recuperados da API do Tempo.</p>
+      </div>
+      <span class="badge">GATEWAY · AGNO · OTEL HABILITADO</span>
+    </header>
+    <nav aria-label="Evidência">
+      <button id="execution-tab" aria-selected="true">Execução e reuso</button>
+      <button id="trace-tab" aria-selected="false">Trace do Tempo</button>
+      <a href="otel-live-run.json">Dados da execução · JSON</a>
+    </nav>
+    <div id="loading">Carregando evidência...</div>
+    <section id="execution" hidden>
+      <div class="cards">
+        <article class="panel">
+          <div class="panel-head"><div><h2>1. Inferência real</h2><p class="muted">LangGraph → A2A → Agno → Gateway</p></div><div class="duration" id="first-time"></div></div>
+          <div class="fields"><div class="muted">HTTP<code>200</code></div><div class="muted">phase<code class="green">completed</code></div><div class="muted">specialist_reused<code>false</code></div></div>
+        </article>
+        <article class="panel">
+          <div class="panel-head"><div><h2>2. Repetição com os mesmos IDs</h2><p class="muted">Resultado persistido reutilizado pelo ledger</p></div><div class="duration" id="replay-time"></div></div>
+          <div class="fields"><div class="muted">HTTP<code>200</code></div><div class="muted">phase<code class="green">completed</code></div><div class="muted">specialist_reused<code>true</code></div></div>
+        </article>
+      </div>
+      <article class="panel"><div class="ids" id="identity"></div></article>
+      <article class="panel"><h2>Resposta do especialista</h2><pre class="summary" id="summary"></pre></article>
+      <p class="note">Evidências sintéticas. O resumo da repetição é idêntico ao da primeira execução. Nenhuma aprovação ou execução de transação faz parte deste experimento.</p>
+    </section>
+    <section id="trace" hidden>
+      <article class="panel">
+        <div class="trace-top"><div><h2>Trace confirmado no Tempo</h2><code class="trace-id" id="trace-id"></code></div><span class="badge">PAI / FILHO VERIFICADOS</span></div>
+        <div class="trace-meta"><div class="muted">Serviços<b>2</b></div><div class="muted">Spans<b>2</b></div><div class="muted">Duração do trace<b id="trace-duration"></b></div><div class="muted">Propagação<b>W3C Trace Context via A2A</b></div></div>
+      </article>
+      <article class="panel"><h2>Delegação entre processos</h2><div class="timeline" id="timeline"></div><div class="relation" id="relation"></div></article>
+      <article class="panel"><h2>Atributos dos spans</h2><table><thead><tr><th>Serviço / span</th><th>Atributo</th><th>Valor</th></tr></thead><tbody id="attributes"></tbody></table><p class="note" style="margin-top:16px">Os spans contêm apenas metadados da operação. Prompts, corpos A2A, credenciais e payloads de negócio não foram registrados nos atributos.</p></article>
+      <p class="note">Esta captura apresenta os spans reais retornados por GET /api/traces/{trace_id} no Tempo. A instrumentação deste lab cobre a delegação A2A; o gateway e o provedor não têm spans neste trace. O reuso evita uma nova delegação ao especialista.</p>
+    </section>
+    <footer id="capture-date" style="margin-top:18px"></footer>
+  </main>
+  <script>
+    const text = (id, value) => document.getElementById(id).textContent = value;
+    const el = (tag, value, className) => { const n = document.createElement(tag); n.textContent = value; if (className) n.className = className; return n; };
+    function show(view) {
+      for (const name of ["execution", "trace"]) {
+        document.getElementById(name).hidden = name !== view;
+        document.getElementById(name + "-tab").setAttribute("aria-selected", String(name === view));
+      }
+    }
+    document.getElementById("execution-tab").onclick = () => show("execution");
+    document.getElementById("trace-tab").onclick = () => show("trace");
+    fetch("otel-live-run.json").then(r => { if (!r.ok) throw new Error("Falha ao carregar os dados"); return r.json(); }).then(data => {
+      text("first-time", data.first_execution.elapsed_seconds.toFixed(2).replace(".", ",") + " s");
+      text("replay-time", data.replay.elapsed_seconds.toFixed(3).replace(".", ",") + " s");
+      for (const key of ["conversation_id", "execution_id", "delegation_id"]) {
+        document.getElementById("identity").append(el("span", key, "muted"), el("code", data.request[key]));
+      }
+      text("summary", data.first_execution.response.summary);
+      text("trace-id", data.trace.trace_id);
+      text("trace-duration", (data.trace.duration_ms / 1000).toFixed(3).replace(".", ",") + " s");
+      const root = data.trace.spans.find(s => !s.parent_span_id);
+      const child = data.trace.spans.find(s => s.parent_span_id);
+      const timeline = document.getElementById("timeline");
+      timeline.append(el("div", "Serviço / operação", "muted"));
+      const ticks = el("div", "", "ticks");
+      for (const tick of [0, .25, .5, .75, 1]) ticks.append(el("span", (root.duration_ms * tick / 1000).toFixed(2) + " s"));
+      timeline.append(ticks);
+      for (const span of [root, child]) {
+        const isChild = Boolean(span.parent_span_id);
+        const label = el("div", span.service, "span-label" + (isChild ? " child" : ""));
+        label.append(el("code", span.name));
+        const track = el("div", "", "span-track");
+        const bar = el("div", (span.duration_ms / 1000).toFixed(3) + " s", "bar" + (isChild ? " child" : ""));
+        bar.style.width = (span.duration_ms / root.duration_ms * 100) + "%";
+        bar.style.marginLeft = ((Number(span.start_time_unix_nano) - Number(root.start_time_unix_nano)) / 1e6 / root.duration_ms * 100) + "%";
+        track.append(bar); timeline.append(label, track);
+        for (const [key, value] of Object.entries(span.attributes)) {
+          const row = el("tr", "");
+          row.append(el("td", span.service + " / " + span.name), el("td", key), el("td", value));
+          document.getElementById("attributes").append(row);
+        }
+      }
+      text("relation", "parent_span_id de specialist.handle: " + child.parent_span_id + " = span_id de specialist.delegate. Ambos compartilham o mesmo trace_id.");
+      text("capture-date", "Execução: " + data.request.execution_id + " · 16/09/2026 · ambiente local · payload sintético");
+      document.getElementById("loading").hidden = true;
+      show("execution");
+    }).catch(error => text("loading", error.message));
+  </script>
+</body>
+</html>
