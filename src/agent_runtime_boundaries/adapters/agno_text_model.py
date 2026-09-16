@@ -1,7 +1,5 @@
 """Agno model boundary over an explicitly selected text generation client."""
 
-from __future__ import annotations
-
 from collections.abc import AsyncIterator, Iterator
 from typing import Any
 

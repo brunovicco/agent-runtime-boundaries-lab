@@ -1,14 +1,12 @@
 """FastAPI entrypoint for the authoritative LangGraph orchestrator."""
 
-from __future__ import annotations
-
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 from typing import Any
 
 from fastapi import FastAPI, HTTPException
 from langgraph.checkpoint.postgres.aio import AsyncPostgresSaver
-from psycopg import AsyncConnection
+from psycopg_pool import AsyncConnectionPool
 
 from agent_runtime_boundaries.adapters.a2a_transport import A2ASpecialistClient
 from agent_runtime_boundaries.adapters.langgraph_runtime import build_graph, run_review
@@ -42,15 +40,23 @@ async def _failure_hook(state: GraphState) -> None:
 async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     """Own independent durable connections for checkpointing and the effect ledger."""
     del app
-    ledger_connection = await AsyncConnection.connect(settings.database_url, autocommit=False)
     specialist = A2ASpecialistClient(
         endpoint=settings.specialist_a2a_url,
         observability=observability,
     )
+    ledger_pool = AsyncConnectionPool(
+        settings.database_url,
+        min_size=settings.effect_ledger_pool_min_size,
+        max_size=settings.effect_ledger_pool_max_size,
+        open=False,
+    )
     try:
-        async with AsyncPostgresSaver.from_conn_string(settings.database_url) as checkpointer:
+        async with (
+            ledger_pool,
+            AsyncPostgresSaver.from_conn_string(settings.database_url) as checkpointer,
+        ):
             await checkpointer.setup()
-            ledger = PostgresEffectLedger(ledger_connection)
+            ledger = PostgresEffectLedger(ledger_pool)
             await ledger.setup()
             _runtime["graph"] = build_graph(
                 specialist=specialist,
@@ -61,7 +67,6 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
             yield
     finally:
         _runtime.clear()
-        await ledger_connection.close()
         observability.flush()
         observability.shutdown()
 

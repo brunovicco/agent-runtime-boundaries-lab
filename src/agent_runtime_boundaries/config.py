@@ -1,7 +1,5 @@
 """Environment-backed application settings."""
 
-from __future__ import annotations
-
 from typing import Literal
 
 from governed_llm_gateway_client import GatewayClientConfig
@@ -20,6 +18,8 @@ class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=None, extra="ignore")
 
     database_url: str = "postgresql://postgres:postgres@127.0.0.1:5432/agent_runtime_boundaries"
+    effect_ledger_pool_min_size: int = Field(default=1, ge=1)
+    effect_ledger_pool_max_size: int = Field(default=10, ge=1)
     specialist_a2a_url: str = "http://127.0.0.1:8101/a2a"
     otel_enabled: bool = False
     otel_exporter_otlp_endpoint: str = "http://127.0.0.1:4318/v1/traces"

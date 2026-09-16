@@ -341,6 +341,12 @@ Para uma demonstração explícita de nova tentativa, forneça identidades de ex
 
 A primeira requisição falha após a gravação da resposta concluída do especialista. A nova tentativa usa a mesma chave de idempotência e deve reutilizar essa resposta em vez de delegar novamente.
 
+`FAIL_AFTER_SPECIALIST_ONCE` provoca uma falha *depois* dessa resposta ser gravada. Uma falha *antes*
+disso é um caso residual diferente: o passo `reserve` do ledger ([ADR 0008](docs/adr/0008-ledger-pending-reservation.md))
+deixa um registro `pending` durável para que a tentativa seja auditável, mas a nova tentativa ainda
+delega de novo — isso continua sendo at-least-once, não exactly-once, e é comprovado por
+`tests/integration/test_postgres_resume.py::test_crash_before_ledger_complete_reattempts_specialist_on_retry`.
+
 > **Um checkpoint diz onde o fluxo de trabalho estava. Um livro-razão de efeitos diz o que já aconteceu.**
 
 ---

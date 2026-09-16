@@ -324,6 +324,12 @@ For an explicit retry demonstration, supply stable execution identities in both 
 The first request fails after the completed specialist response is recorded. The retry uses the same
 idempotency key and must reuse that response rather than delegating again.
 
+`FAIL_AFTER_SPECIALIST_ONCE` crashes *after* that response is recorded. A crash *before* it is
+recorded is a different, residual case: the ledger's `reserve` step ([ADR 0008](docs/adr/0008-ledger-pending-reservation.md))
+leaves a durable `pending` record so the attempt is auditable, but the retry still delegates again —
+this remains at-least-once, not exactly-once, and is proven by
+`tests/integration/test_postgres_resume.py::test_crash_before_ledger_complete_reattempts_specialist_on_retry`.
+
 > **A checkpoint tells you where the workflow was. An effect ledger tells you what already happened.**
 
 ## Canonical identity mapping

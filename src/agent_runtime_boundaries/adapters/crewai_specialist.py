@@ -1,7 +1,5 @@
 """CrewAI specialist crew kept behind the same framework-neutral boundary as Agno."""
 
-from __future__ import annotations
-
 import asyncio
 from typing import Any
 

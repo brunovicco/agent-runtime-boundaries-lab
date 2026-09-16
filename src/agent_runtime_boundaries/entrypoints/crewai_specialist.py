@@ -1,7 +1,5 @@
 """FastAPI entrypoint for the CrewAI specialist service."""
 
-from __future__ import annotations
-
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 

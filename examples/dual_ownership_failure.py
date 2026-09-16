@@ -1,7 +1,5 @@
 """Credential-free illustration of why sequential dual writes split runtime truth."""
 
-from __future__ import annotations
-
 from dataclasses import dataclass
 
 

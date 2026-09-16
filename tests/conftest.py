@@ -1,7 +1,5 @@
 """Keep credential-free framework tests within repository-local storage."""
 
-from __future__ import annotations
-
 import pytest
 
 

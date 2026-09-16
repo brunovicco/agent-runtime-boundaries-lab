@@ -1,7 +1,5 @@
 """CrewAI custom LLM over an explicitly selected text generation client."""
 
-from __future__ import annotations
-
 import asyncio
 from typing import TYPE_CHECKING, Any
 
@@ -35,11 +33,11 @@ class CrewAITextLLM(BaseLLM):
     def call(
         self,
         messages: str | list[LLMMessage],
-        tools: list[dict[str, BaseTool]] | None = None,
+        tools: "list[dict[str, BaseTool]] | None" = None,
         callbacks: list[Any] | None = None,
         available_functions: dict[str, Any] | None = None,
-        from_task: Task | None = None,
-        from_agent: BaseAgent | None = None,
+        from_task: "Task | None" = None,
+        from_agent: "BaseAgent | None" = None,
         response_model: type[BaseModel] | None = None,
     ) -> str:
         """Run the async SDK inside the specialist's CrewAI worker thread."""
@@ -58,11 +56,11 @@ class CrewAITextLLM(BaseLLM):
     async def acall(
         self,
         messages: str | list[LLMMessage],
-        tools: list[dict[str, BaseTool]] | None = None,
+        tools: "list[dict[str, BaseTool]] | None" = None,
         callbacks: list[Any] | None = None,
         available_functions: dict[str, Any] | None = None,
-        from_task: Task | None = None,
-        from_agent: BaseAgent | None = None,
+        from_task: "Task | None" = None,
+        from_agent: "BaseAgent | None" = None,
         response_model: type[BaseModel] | None = None,
     ) -> str:
         """Accept only text and reject unimplemented features before inference."""

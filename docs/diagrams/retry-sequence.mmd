@@ -2,12 +2,14 @@ sequenceDiagram
     participant O as Orchestrator
     participant L as Ledger
     participant S as Specialist
-    O->>L: get(key)
+    O->>L: get_completed(key)
     L-->>O: miss
+    O->>L: reserve(key)
+    L-->>O: pending
     O->>S: delegate
     S-->>O: result
     O->>L: complete(key,result)
-    Note over O: crash
-    O->>L: get(key)
+    Note over O: crash after complete
+    O->>L: get_completed(key)
     L-->>O: result
     Note over O: no second specialist call

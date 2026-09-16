@@ -1,7 +1,5 @@
 """Small architecture test that protects framework boundaries."""
 
-from __future__ import annotations
-
 import ast
 from pathlib import Path
 
