@@ -1,7 +1,5 @@
 """a2a-otel-kit observability bootstrap."""
 
-from __future__ import annotations
-
 from a2a_otel_kit import Observability, ObservabilitySettings
 
 

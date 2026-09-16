@@ -48,7 +48,12 @@ A checkpoint can tell the orchestrator that it reached the specialist node. It c
 guarantee that a remote service was not already invoked before a process failure.
 
 The ledger records a stable idempotency key and the completed response. On replay, the orchestrator
-can reuse that response instead of invoking the remote specialist again.
+can reuse that response instead of invoking the remote specialist again. Before delegating, it also
+`reserve`s the key, so a crash between the remote call and the completed write still leaves a
+durable `pending` record — see [ADR 0008](adr/0008-ledger-pending-reservation.md). That reservation
+makes the crash window auditable, not exactly-once: a retry that only finds a `pending` record still
+invokes the specialist again, because the ledger cannot know whether the earlier remote call
+actually succeeded.
 
 ```mermaid
 sequenceDiagram
@@ -56,16 +61,20 @@ sequenceDiagram
     participant L as Effect Ledger
     participant A as Agno Specialist
 
-    LG->>L: get(idempotency_key)
+    LG->>L: get_completed(idempotency_key)
     L-->>LG: miss
+    LG->>L: reserve(idempotency_key)
+    L-->>LG: pending
     LG->>A: A2A delegation
     A-->>LG: completed result
     LG->>L: complete(key, result)
     Note over LG: process fails before final node
-    LG->>L: get(same key)
+    LG->>L: get_completed(same key)
     L-->>LG: completed result
     Note over LG: specialist is not called again
 ```
+
+Same flow as [`docs/diagrams/retry-sequence.mmd`](diagrams/retry-sequence.mmd).
 
 ## Why specialist runtimes do not own the global state
 

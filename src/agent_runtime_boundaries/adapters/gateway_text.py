@@ -1,7 +1,5 @@
 """Bounded text generation through the current provider-neutral gateway SDK."""
 
-from __future__ import annotations
-
 import re
 from collections.abc import Sequence
 from dataclasses import dataclass

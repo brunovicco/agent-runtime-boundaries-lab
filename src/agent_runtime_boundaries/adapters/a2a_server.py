@@ -1,7 +1,5 @@
 """Minimal A2A message-send server adapter for any specialist port."""
 
-from __future__ import annotations
-
 from typing import Any
 
 from a2a_otel_kit import Observability, continue_trace

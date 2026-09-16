@@ -1,7 +1,5 @@
 """Agno specialist whose state is explicitly local to the specialist boundary."""
 
-from __future__ import annotations
-
 from pathlib import Path
 from typing import Any
 

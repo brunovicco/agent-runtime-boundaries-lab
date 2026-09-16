@@ -1,7 +1,5 @@
 """Framework-neutral execution identity."""
 
-from __future__ import annotations
-
 import re
 from uuid import uuid4
 

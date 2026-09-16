@@ -1,7 +1,5 @@
 """CrewAI experiment contract tests that require no model call."""
 
-from __future__ import annotations
-
 from crewai import Agent, Process
 from governed_llm_gateway_client import GatewayClientConfig
 from governed_llm_gateway_contracts import DataClassification, RiskLevel

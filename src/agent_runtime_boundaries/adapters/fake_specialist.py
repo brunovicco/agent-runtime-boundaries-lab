@@ -1,7 +1,5 @@
 """Credential-free specialist used by the deterministic demo and unit tests."""
 
-from __future__ import annotations
-
 from agent_runtime_boundaries.domain.contracts import SpecialistRequest, SpecialistResponse
 
 

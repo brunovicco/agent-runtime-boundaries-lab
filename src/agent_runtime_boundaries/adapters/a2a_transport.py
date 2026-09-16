@@ -1,7 +1,5 @@
 """A2A JSON-RPC transport carrying canonical contracts and W3C trace context."""
 
-from __future__ import annotations
-
 from typing import Any
 from uuid import uuid4
 
@@ -15,10 +13,17 @@ from agent_runtime_boundaries.domain.contracts import SpecialistRequest, Special
 class A2ASpecialistClient:
     """Small protocol adapter around an A2A message-send boundary."""
 
-    def __init__(self, *, endpoint: str, observability: Observability) -> None:
+    def __init__(
+        self,
+        *,
+        endpoint: str,
+        observability: Observability,
+        transport: httpx.AsyncBaseTransport | None = None,
+    ) -> None:
         """Configure the specialist endpoint and trace lifecycle."""
         self._endpoint = endpoint.rstrip("/")
         self._observability = observability
+        self._transport = transport
 
     async def analyze(self, request: SpecialistRequest) -> SpecialistResponse:
         """Send a canonical specialist request inside an A2A text part."""
@@ -48,7 +53,9 @@ class A2ASpecialistClient:
                     },
                 },
             }
-            async with httpx.AsyncClient(timeout=60, follow_redirects=False) as client:
+            async with httpx.AsyncClient(
+                timeout=60, follow_redirects=False, transport=self._transport
+            ) as client:
                 response = await client.post(self._endpoint, headers=headers, json=body)
                 response.raise_for_status()
                 payload = response.json()
@@ -56,7 +63,10 @@ class A2ASpecialistClient:
             raise RuntimeError("A2A specialist returned an error")
         result = payload.get("result", {})
         text = _extract_text(result)
-        return SpecialistResponse.model_validate_json(text)
+        specialist_response = SpecialistResponse.model_validate_json(text)
+        if specialist_response.identity != request.identity:
+            raise RuntimeError("A2A specialist response identity does not match the request")
+        return specialist_response
 
 
 def _extract_text(result: dict[str, Any]) -> str:

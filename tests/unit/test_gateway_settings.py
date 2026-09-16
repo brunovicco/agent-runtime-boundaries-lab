@@ -1,7 +1,5 @@
 """Gateway configuration must fail before credentials or inference are used."""
 
-from __future__ import annotations
-
 from typing import Any
 
 import pytest

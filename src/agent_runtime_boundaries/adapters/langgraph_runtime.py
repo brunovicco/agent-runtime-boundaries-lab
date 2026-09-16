@@ -1,13 +1,12 @@
 """LangGraph adapter: the single authoritative workflow runtime."""
 
-from __future__ import annotations
-
 from collections.abc import Awaitable, Callable
 from typing import Any
 
 from langgraph.graph import END, START, StateGraph
 
 from agent_runtime_boundaries.application.ports import EffectLedger, SpecialistPort
+from agent_runtime_boundaries.application.service import execute_delegation
 from agent_runtime_boundaries.domain.contracts import (
     GraphState,
     ReviewCommand,
@@ -31,6 +30,7 @@ def build_graph(
     ledger: EffectLedger,
     checkpointer: Any,
     after_specialist_hook: FailureHook = _noop_failure_hook,
+    before_complete_hook: FailureHook = _noop_failure_hook,
 ) -> Any:
     """Compile the authoritative graph around injected infrastructure ports."""
 
@@ -49,13 +49,16 @@ def build_graph(
             payload=state.get("payload", {}),
             idempotency_key=identity.idempotency_key("specialist-risk-review"),
         )
-        cached = await ledger.get_completed(request.idempotency_key)
-        reused = cached is not None
-        if cached is None:
-            response = await specialist.analyze(request)
-            cached = response.model_dump(mode="json")
-            await ledger.complete(request.idempotency_key, cached)
-        response = SpecialistResponse.model_validate(cached)
+
+        async def before_complete() -> None:
+            await before_complete_hook(state)
+
+        response, reused = await execute_delegation(
+            ledger=ledger,
+            specialist=specialist,
+            request=request,
+            before_complete=before_complete,
+        )
         updates: GraphState = {
             "phase": WorkflowPhase.SPECIALIST_COMPLETED.value,
             "specialist_result": response.model_dump(mode="json"),

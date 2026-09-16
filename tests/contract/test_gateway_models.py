@@ -1,7 +1,5 @@
 """Exercise both specialist frameworks against the real SDK with credential-free SSE."""
 
-from __future__ import annotations
-
 import json
 from collections.abc import Callable
 from pathlib import Path

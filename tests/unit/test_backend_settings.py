@@ -1,7 +1,5 @@
 """Explicit backend selection must not leak secrets or require the other backend."""
 
-from __future__ import annotations
-
 import os
 from typing import Any
 

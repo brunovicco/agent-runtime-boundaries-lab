@@ -2,6 +2,18 @@
 
 ## Unreleased
 
+- Added a `reserve` step to the effect ledger so a crash between the specialist call and the
+  completed write leaves a durable, auditable `pending` record instead of no record at all (ADR
+  0008). This does not make delegation exactly-once: a retry against a stale `pending` record still
+  invokes the specialist again. Consolidated the duplicated delegation policy from
+  `langgraph_runtime.py` and `demo.py` into `application/service.py::execute_delegation`.
+  **Breaking**: the `agent_effect_ledger` table schema changed (new `status` column, nullable
+  `payload`); drop any existing local table before running against the new schema.
+- Replaced the effect ledger's single shared `psycopg` connection with a pooled
+  `psycopg_pool.AsyncConnectionPool`, since one connection is not safe for concurrent requests.
+  Added `psycopg-pool` as a direct dependency and `EFFECT_LEDGER_POOL_MIN_SIZE`/`MAX_SIZE` settings.
+- Added a check that a specialist's A2A response echoes back the same canonical identity as the
+  request, rejecting a mismatch instead of trusting it silently.
 - Recorded real gateway inference with OTEL, Collector/Tempo export and ledger replay. Added actual
   Grafana/response screenshots to both READMEs, archived evidence and reproducible tracing commands.
 - Added explicit `LLM_BACKEND=openai` with `OPENAI_API_KEY` for Agno and CrewAI, shared text bridges,

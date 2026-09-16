@@ -1,7 +1,5 @@
 """Credential-free simulation of LangGraph + CrewAI Flow competing for global state."""
 
-from __future__ import annotations
-
 from dataclasses import dataclass
 
 
