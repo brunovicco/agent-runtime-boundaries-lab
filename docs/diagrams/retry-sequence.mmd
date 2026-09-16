@@ -1,0 +1,13 @@
+sequenceDiagram
+    participant O as Orchestrator
+    participant L as Ledger
+    participant S as Specialist
+    O->>L: get(key)
+    L-->>O: miss
+    O->>S: delegate
+    S-->>O: result
+    O->>L: complete(key,result)
+    Note over O: crash
+    O->>L: get(key)
+    L-->>O: result
+    Note over O: no second specialist call

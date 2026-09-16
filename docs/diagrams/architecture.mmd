@@ -1,0 +1,9 @@
+flowchart LR
+    C[Client] --> API[FastAPI]
+    API --> LG[LangGraph]
+    LG --> CP[(Postgres Checkpoints)]
+    LG --> EL[(Effect Ledger)]
+    LG -->|A2A| AG[Agno Specialist]
+    AG --> AS[(Agno Local State)]
+    AG --> GW[Governed LLM Gateway]
+    GW --> P[LLM Provider]
